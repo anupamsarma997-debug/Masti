@@ -1,0 +1,6 @@
+{
+  "name": "OpenEdu Browser",
+  "description": "Native Android open-access educational browser with Unpaywall paper lookup, Wayback Machine integration, paywall overlay remover, multi-tab support, and custom user-agent.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

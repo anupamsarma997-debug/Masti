@@ -1,0 +1,29 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Globe Circle -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="3.5"
+        android:pathData="M54,28 A26,26 0 1,0 54,80 A26,26 0 1,0 54,28 Z" />
+    <!-- Latitude / Longitude lines -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="2"
+        android:pathData="M28,54 H80 M32,41 Q54,48 76,41 M32,67 Q54,60 76,67 M54,28 Q64,54 54,80 M54,28 Q44,54 54,80" />
+    <!-- Graduation Cap Symbol overlaid -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M54,20 L82,32 L54,44 L26,32 Z" />
+    <path
+        android:fillColor="#D97706"
+        android:pathData="M36,37.5 V48 C36,54 72,54 72,48 V37.5 C68,41 58,43 54,43 C50,43 40,41 36,37.5 Z" />
+    <!-- Tassel -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M78,34 V48 L80,50 L82,48 V34 Z" />
+</vector>
