@@ -2,18 +2,23 @@ package com.example.ui.components
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.view.View
 import android.view.ViewGroup
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -49,6 +54,8 @@ fun WebContainer(
     }
 
     val context = LocalContext.current
+    var customVideoView by remember { mutableStateOf<View?>(null) }
+    var customViewCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
 
     val webView = remember(activeTab?.id) {
         WebView(context).apply {
@@ -61,14 +68,16 @@ fun WebContainer(
                 javaScriptEnabled = true
                 domStorageEnabled = true
                 allowContentAccess = true
-                allowFileAccess = false
+                allowFileAccess = true
                 databaseEnabled = true
                 loadWithOverviewMode = true
                 useWideViewPort = true
                 builtInZoomControls = true
                 displayZoomControls = false
                 setSupportZoom(true)
-                mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                mediaPlaybackRequiresUserGesture = false
+                javaScriptCanOpenWindowsAutomatically = true
+                mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             }
 
             webChromeClient = object : WebChromeClient() {
@@ -81,6 +90,19 @@ fun WebContainer(
                     if (!title.isNullOrBlank()) {
                         onTitleChanged(title)
                     }
+                }
+
+                override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+                    super.onShowCustomView(view, callback)
+                    customVideoView = view
+                    customViewCallback = callback
+                }
+
+                override fun onHideCustomView() {
+                    super.onHideCustomView()
+                    customVideoView = null
+                    customViewCallback?.onCustomViewHidden()
+                    customViewCallback = null
                 }
             }
 
@@ -149,6 +171,22 @@ fun WebContainer(
             factory = { webView },
             modifier = Modifier.fillMaxSize()
         )
+
+        // Render full screen video view if active
+        customVideoView?.let { videoView ->
+            AndroidView(
+                factory = {
+                    FrameLayout(context).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                        addView(videoView)
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 
     DisposableEffect(activeTab?.id) {
