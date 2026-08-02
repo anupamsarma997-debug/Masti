@@ -1,6 +1,6 @@
 {
   "name": "OpenEdu Browser",
-  "description": "Native Android open-access educational browser with Unpaywall paper lookup, Wayback Machine integration, paywall overlay remover, multi-tab support, and custom user-agent.",
+  "description": "Academic research Android web browser with Gemini AI paper assistant, legal free access discovery (Unpaywall, Semantic Scholar, Wayback), distraction-free reader mode, citation exports, and research library.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
