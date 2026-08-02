@@ -64,12 +64,21 @@ import com.example.model.AcademicPortal
 fun HomeScreenView(
     academicPortals: List<AcademicPortal>,
     onSearchSubmit: (String) -> Unit,
+    onVideoSearchSubmit: (String) -> Unit,
+    onBookSearchSubmit: (String) -> Unit,
+    onPaperSearchSubmit: (String) -> Unit,
     onOpenDoiLookup: (String) -> Unit,
     onPortalClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var doiQuery by remember { mutableStateOf("") }
+    var selectedCategoryFilter by remember { mutableStateOf("All") }
+
+    val filteredPortals = remember(selectedCategoryFilter, academicPortals) {
+        if (selectedCategoryFilter == "All") academicPortals
+        else academicPortals.filter { it.category.equals(selectedCategoryFilter, ignoreCase = true) }
+    }
 
     Column(
         modifier = modifier
@@ -79,7 +88,7 @@ fun HomeScreenView(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Hero Logo & Title Box
         Box(
@@ -115,58 +124,93 @@ fun HomeScreenView(
         )
 
         Text(
-            text = "Open Access Academic Research & Web Engine",
+            text = "Search any Topic, Video, Book or Research Paper",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Big Main Search Input
         Surface(
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(24.dp),
             color = MaterialTheme.colorScheme.surface,
             shadowElevation = 6.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
 
-                Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search web, topics, or enter URL...") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = {
-                        if (searchQuery.isNotBlank()) {
-                            onSearchSubmit(searchQuery)
-                        }
-                    }),
-                    modifier = Modifier.weight(1f)
-                )
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Enter topic, video, book name, or URL...") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = {
+                            if (searchQuery.isNotBlank()) {
+                                onSearchSubmit(searchQuery)
+                            }
+                        }),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
-                if (searchQuery.isNotBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Quick Action Buttons based on input
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Button(
-                        onClick = { onSearchSubmit(searchQuery) },
-                        shape = RoundedCornerShape(20.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        onClick = { if (searchQuery.isNotBlank()) onSearchSubmit(searchQuery) else onSearchSubmit("https://www.google.com") },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text("Go")
+                        Text("🌐 Web Search", fontSize = 12.sp)
+                    }
+
+                    Button(
+                        onClick = { if (searchQuery.isNotBlank()) onVideoSearchSubmit(searchQuery) else onPortalClick("https://www.youtube.com") },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("🎥 Find Videos", fontSize = 12.sp)
+                    }
+
+                    Button(
+                        onClick = { if (searchQuery.isNotBlank()) onBookSearchSubmit(searchQuery) else onPortalClick("https://openlibrary.org") },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("📚 Find Books", fontSize = 12.sp)
+                    }
+
+                    Button(
+                        onClick = { if (searchQuery.isNotBlank()) onPaperSearchSubmit(searchQuery) else onPortalClick("https://arxiv.org") },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("📄 Papers", fontSize = 12.sp)
                     }
                 }
             }
@@ -247,7 +291,7 @@ fun HomeScreenView(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Feature Highlights FlowRow
         FlowRow(
@@ -264,35 +308,63 @@ fun HomeScreenView(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Academic Research Portals Section Header
+        // Academic & Media Portals Section Header
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.MenuBook,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Academic Research Portals",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.MenuBook,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
                 )
-            )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Research & Media Portals",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
+
+        // Category Filter Tabs
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            listOf("All", "Books", "Videos", "Papers", "Journals").forEach { category ->
+                val isSelected = selectedCategoryFilter == category
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.clickable { selectedCategoryFilter = category }
+                ) {
+                    Text(
+                        text = category,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Grid of Portals
         Column(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            academicPortals.chunked(2).forEach { rowItems ->
+            filteredPortals.chunked(2).forEach { rowItems ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)

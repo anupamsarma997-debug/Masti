@@ -79,14 +79,18 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
 
     // Academic Portals / Quick Dials
     val academicPortals = listOf(
-        AcademicPortal("arXiv.org", "Open-access archive for 2M+ scholarly articles", "https://arxiv.org", "Preprints"),
+        AcademicPortal("Open Library", "Millions of free digital books & borrowing", "https://openlibrary.org", "Books"),
+        AcademicPortal("YouTube Education", "Video lectures, tutorials, and educational media", "https://www.youtube.com", "Videos"),
+        AcademicPortal("Google Books", "Search the world's most comprehensive index of full-text books", "https://books.google.com", "Books"),
+        AcademicPortal("MIT OpenCourseWare", "Free lecture notes, exams, and videos from MIT", "https://ocw.mit.edu", "Videos"),
+        AcademicPortal("Project Gutenberg", "Over 70,000 free ebooks to download or read online", "https://www.gutenberg.org", "Books"),
+        AcademicPortal("Khan Academy", "Free online courses, lessons & practice videos", "https://www.khanacademy.org", "Videos"),
+        AcademicPortal("arXiv.org", "Open-access archive for 2M+ scholarly articles", "https://arxiv.org", "Papers"),
         AcademicPortal("DOAJ", "Directory of Open Access Journals", "https://doaj.org", "Journals"),
         AcademicPortal("PubMed Central", "Free full-text archive of biomedical literature", "https://www.ncbi.nlm.nih.gov/pmc/", "Medical"),
         AcademicPortal("Internet Archive", "Millions of free books, movies, & web pages", "https://archive.org", "Archive"),
         AcademicPortal("Wikipedia", "The Free Encyclopedia", "https://en.wikipedia.org", "Reference"),
-        AcademicPortal("Unpaywall", "Harvests Open Access content from 50K+ publishers", "https://unpaywall.org", "Open Access"),
-        AcademicPortal("DuckDuckGo", "Privacy-focused web search engine", "https://html.duckduckgo.com", "Search"),
-        AcademicPortal("JSTOR (Free)", "Explore free academic research articles", "https://www.jstor.org/open/", "Research")
+        AcademicPortal("Unpaywall", "Harvests Open Access content from 50K+ publishers", "https://unpaywall.org", "Open Access")
     )
 
     // Tab Operations
@@ -126,6 +130,21 @@ class BrowserViewModel(application: Application) : AndroidViewModel(application)
             _activeTabIndex.value = index
             _showTabSwitcher.value = false
         }
+    }
+
+    fun searchVideo(query: String) {
+        val encoded = java.net.URLEncoder.encode(query.trim(), "UTF-8")
+        navigateActiveTab("https://www.youtube.com/results?search_query=$encoded")
+    }
+
+    fun searchBook(query: String) {
+        val encoded = java.net.URLEncoder.encode(query.trim(), "UTF-8")
+        navigateActiveTab("https://openlibrary.org/search?q=$encoded")
+    }
+
+    fun searchPaper(query: String) {
+        val encoded = java.net.URLEncoder.encode(query.trim(), "UTF-8")
+        navigateActiveTab("https://arxiv.org/search/?searchtype=all&query=$encoded")
     }
 
     fun navigateActiveTab(input: String) {

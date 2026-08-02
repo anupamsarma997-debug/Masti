@@ -131,6 +131,9 @@ fun BrowserScreen(
                 activeTab = activeTab,
                 academicPortals = viewModel.academicPortals,
                 onSearchSubmit = { viewModel.navigateActiveTab(it) },
+                onVideoSearchSubmit = { viewModel.searchVideo(it) },
+                onBookSearchSubmit = { viewModel.searchBook(it) },
+                onPaperSearchSubmit = { viewModel.searchPaper(it) },
                 onOpenDoiLookup = {
                     viewModel.setShowOpenAccessDialog(true)
                     viewModel.lookupPaperDoi(it)

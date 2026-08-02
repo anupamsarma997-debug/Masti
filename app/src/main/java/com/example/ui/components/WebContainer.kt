@@ -34,6 +34,9 @@ fun WebContainer(
     activeTab: WebTab?,
     academicPortals: List<AcademicPortal>,
     onSearchSubmit: (String) -> Unit,
+    onVideoSearchSubmit: (String) -> Unit = {},
+    onBookSearchSubmit: (String) -> Unit = {},
+    onPaperSearchSubmit: (String) -> Unit = {},
     onOpenDoiLookup: (String) -> Unit,
     onTitleChanged: (String) -> Unit,
     onUrlChanged: (String) -> Unit,
@@ -46,6 +49,9 @@ fun WebContainer(
         HomeScreenView(
             academicPortals = academicPortals,
             onSearchSubmit = onSearchSubmit,
+            onVideoSearchSubmit = onVideoSearchSubmit,
+            onBookSearchSubmit = onBookSearchSubmit,
+            onPaperSearchSubmit = onPaperSearchSubmit,
             onOpenDoiLookup = onOpenDoiLookup,
             onPortalClick = onSearchSubmit,
             modifier = modifier
