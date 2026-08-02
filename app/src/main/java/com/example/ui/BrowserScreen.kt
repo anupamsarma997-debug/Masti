@@ -4,30 +4,41 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ChromeReaderMode
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Tab
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.ui.components.AddressBar
-import com.example.ui.components.BookmarksHistoryDialog
+import com.example.ui.components.AiResearchAssistantSheet
+import com.example.ui.components.CitationDialog
+import com.example.ui.components.CrossReferenceSheet
+import com.example.ui.components.LibraryDialog
 import com.example.ui.components.OpenAccessDialog
+import com.example.ui.components.ReaderModeView
 import com.example.ui.components.SettingsDialog
 import com.example.ui.components.TabSwitcherSheet
 import com.example.ui.components.WebContainer
@@ -39,21 +50,51 @@ fun BrowserScreen(
     val tabs by viewModel.tabs.collectAsState()
     val activeTabIndex by viewModel.activeTabIndex.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    val allowAiProcessing by viewModel.allowAiProcessing.collectAsState()
     val bookmarks by viewModel.bookmarks.collectAsState()
     val history by viewModel.history.collectAsState()
+    val readingItems by viewModel.readingItems.collectAsState()
+    val notes by viewModel.notes.collectAsState()
+    val savedArticles by viewModel.savedOfflineArticles.collectAsState()
 
-    val unpaywallResult by viewModel.unpaywallResult.collectAsState()
-    val waybackResult by viewModel.waybackResult.collectAsState()
+    val aiResearchResult by viewModel.aiResearchResult.collectAsState()
+    val isAiLoading by viewModel.isAiLoading.collectAsState()
+    val aiError by viewModel.aiError.collectAsState()
+    val aiQuestionAnswer by viewModel.aiQuestionAnswer.collectAsState()
+    val isAnsweringQuestion by viewModel.isAnsweringQuestion.collectAsState()
+
+    val legalFreeResult by viewModel.legalFreeResult.collectAsState()
     val isLookupLoading by viewModel.isLookupLoading.collectAsState()
     val lookupError by viewModel.lookupError.collectAsState()
 
+    val readerModeActive by viewModel.readerModeActive.collectAsState()
+    val readerModeTitle by viewModel.readerModeTitle.collectAsState()
+    val readerModeContent by viewModel.readerModeContent.collectAsState()
+
+    val citationMetadata by viewModel.citationMetadata.collectAsState()
+    val crossRefResult by viewModel.crossRefResult.collectAsState()
+
     val showTabSwitcher by viewModel.showTabSwitcher.collectAsState()
+    val showAiSheet by viewModel.showAiSheet.collectAsState()
     val showOpenAccessDialog by viewModel.showOpenAccessDialog.collectAsState()
-    val showBookmarksHistoryDialog by viewModel.showBookmarksHistoryDialog.collectAsState()
+    val showLibraryDialog by viewModel.showLibraryDialog.collectAsState()
     val showSettingsDialog by viewModel.showSettingsDialog.collectAsState()
+    val showCitationDialog by viewModel.showCitationDialog.collectAsState()
+    val showCrossRefSheet by viewModel.showCrossRefSheet.collectAsState()
 
     val activeTab = viewModel.activeTab
     val isCurrentBookmarked = bookmarks.any { it.url == activeTab?.url }
+
+    if (readerModeActive) {
+        ReaderModeView(
+            title = readerModeTitle,
+            content = readerModeContent,
+            url = activeTab?.url ?: "",
+            onClose = { viewModel.closeReaderMode() },
+            onSaveOffline = { viewModel.saveCurrentArticleOffline() }
+        )
+        return
+    }
 
     Scaffold(
         topBar = {
@@ -67,7 +108,7 @@ fun BrowserScreen(
                 onTabSwitcherClick = { viewModel.setShowTabSwitcher(true) },
                 onOpenAccessClick = { viewModel.setShowOpenAccessDialog(true) },
                 onToggleBookmark = { viewModel.toggleBookmarkCurrentTab() },
-                onShowBookmarksHistory = { viewModel.setShowBookmarksHistoryDialog(true) },
+                onShowBookmarksHistory = { viewModel.setShowLibraryDialog(true) },
                 onToggleDesktopMode = { viewModel.toggleDesktopUserAgent() },
                 onToggleOverlayBlocker = { viewModel.toggleOverlayBlocker() },
                 onShowSettings = { viewModel.setShowSettingsDialog(true) }
@@ -98,12 +139,34 @@ fun BrowserScreen(
                     }
 
                     IconButton(
+                        onClick = { viewModel.setShowLibraryDialog(true) },
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MenuBook,
+                            contentDescription = "Library",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { viewModel.openReaderMode("") },
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ChromeReaderMode,
+                            contentDescription = "Reader Mode",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    IconButton(
                         onClick = { viewModel.setShowOpenAccessDialog(true) },
                         modifier = Modifier.size(44.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = "Unpaywall Paper Search",
+                            contentDescription = "Find Legal Access",
                             tint = MaterialTheme.colorScheme.tertiary
                         )
                     }
@@ -119,6 +182,17 @@ fun BrowserScreen(
                         )
                     }
                 }
+            }
+        },
+        floatingActionButton = {
+            if (activeTab != null && activeTab.url != "about:home") {
+                ExtendedFloatingActionButton(
+                    onClick = { viewModel.triggerAiPageResearch() },
+                    icon = { Icon(Icons.Default.AutoAwesome, contentDescription = "Ask AI") },
+                    text = { Text("Ask about page", fontSize = 13.sp) },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
         }
     ) { paddingValues ->
@@ -153,6 +227,23 @@ fun BrowserScreen(
         }
     }
 
+    // AI Research Bottom Sheet
+    if (showAiSheet) {
+        AiResearchAssistantSheet(
+            url = activeTab?.url ?: "",
+            pageTitle = activeTab?.title ?: "",
+            aiResult = aiResearchResult,
+            isLoading = isAiLoading,
+            errorMessage = aiError,
+            allowAiProcessing = allowAiProcessing,
+            onDismiss = { viewModel.setShowAiSheet(false) },
+            onRefreshAi = { viewModel.triggerAiPageResearch(forceRefresh = true) },
+            onAskQuestion = { viewModel.askAiQuestion(it) },
+            aiQuestionAnswer = aiQuestionAnswer,
+            isAnsweringQuestion = isAnsweringQuestion
+        )
+    }
+
     // Tab Switcher Dialog
     if (showTabSwitcher) {
         TabSwitcherSheet(
@@ -165,12 +256,11 @@ fun BrowserScreen(
         )
     }
 
-    // Open Access Paper / Wayback Dialog
+    // Open Access Paper / Wayback / CrossRef Dialog
     if (showOpenAccessDialog) {
         OpenAccessDialog(
             initialDoiOrUrl = activeTab?.detectedDoi ?: if (activeTab?.url != "about:home") activeTab?.url else null,
-            unpaywallResult = unpaywallResult,
-            waybackResult = waybackResult,
+            legalFreeResult = legalFreeResult,
             isLoading = isLookupLoading,
             errorMessage = lookupError,
             onLookupDoi = { viewModel.lookupPaperDoi(it) },
@@ -179,23 +269,63 @@ fun BrowserScreen(
                 viewModel.addNewTab(url)
                 viewModel.setShowOpenAccessDialog(false)
             },
+            onExportCitation = { meta ->
+                viewModel.openCitationDialog(meta)
+            },
+            onViewCrossReferences = { res ->
+                viewModel.openCrossRefSheet(res)
+            },
             onDismiss = { viewModel.setShowOpenAccessDialog(false) }
         )
     }
 
-    // Bookmarks & History Dialog
-    if (showBookmarksHistoryDialog) {
-        BookmarksHistoryDialog(
+    // Library Dialog
+    if (showLibraryDialog) {
+        LibraryDialog(
             bookmarks = bookmarks,
             history = history,
-            onOpenUrl = { url ->
+            readingItems = readingItems,
+            notes = notes,
+            savedArticles = savedArticles,
+            onSelectUrl = { url ->
                 viewModel.navigateActiveTab(url)
-                viewModel.setShowBookmarksHistoryDialog(false)
+                viewModel.setShowLibraryDialog(false)
             },
-            onDeleteBookmark = { viewModel.deleteBookmark(it) },
-            onDeleteHistoryItem = { viewModel.deleteHistoryItem(it) },
-            onClearAllHistory = { viewModel.clearAllHistory() },
-            onDismiss = { viewModel.setShowBookmarksHistoryDialog(false) }
+            onDeleteBookmark = { url -> viewModel.removeBookmark(url) },
+            onClearHistory = { viewModel.clearAllHistory() },
+            onUpdateReadingStatus = { url, title, status ->
+                viewModel.updateReadingStatus(url, title, status)
+            },
+            onDeleteNote = { note -> viewModel.deleteNote(note) },
+            onOpenOfflineArticle = { article ->
+                viewModel.openReaderMode(article.extractedContent)
+                viewModel.setShowLibraryDialog(false)
+            },
+            onDeleteOfflineArticle = { url -> viewModel.deleteOfflineArticle(url) },
+            onDismiss = { viewModel.setShowLibraryDialog(false) }
+        )
+    }
+
+    // Citation Dialog
+    if (showCitationDialog && citationMetadata != null) {
+        CitationDialog(
+            metadata = citationMetadata!!,
+            onDismiss = { viewModel.closeCitationDialog() }
+        )
+    }
+
+    // Cross Reference Sheet
+    if (showCrossRefSheet && crossRefResult != null) {
+        CrossReferenceSheet(
+            doi = crossRefResult!!.doi,
+            paperTitle = crossRefResult!!.title,
+            citers = crossRefResult!!.citers,
+            references = crossRefResult!!.references,
+            onDismiss = { viewModel.closeCrossRefSheet() },
+            onSelectPaper = { query ->
+                viewModel.searchPaper(query)
+                viewModel.closeCrossRefSheet()
+            }
         )
     }
 
@@ -203,6 +333,8 @@ fun BrowserScreen(
     if (showSettingsDialog) {
         SettingsDialog(
             settings = settings,
+            allowAiProcessing = allowAiProcessing,
+            onToggleAiProcessing = { viewModel.toggleAiProcessing() },
             onUpdateSearchEngine = { viewModel.updateSearchEngine(it) },
             onToggleDesktopMode = { viewModel.toggleDesktopUserAgent() },
             onToggleOverlayBlocker = { viewModel.toggleOverlayBlocker() },
@@ -213,3 +345,4 @@ fun BrowserScreen(
         )
     }
 }
+

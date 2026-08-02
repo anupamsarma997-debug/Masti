@@ -40,3 +40,35 @@ data class Snapshot(
     @Json(name = "url") val url: String?,
     @Json(name = "timestamp") val timestamp: String?
 )
+
+@JsonClass(generateAdapter = true)
+data class SemanticScholarPaper(
+    @Json(name = "paperId") val paperId: String?,
+    @Json(name = "title") val title: String?,
+    @Json(name = "year") val year: Int?,
+    @Json(name = "authors") val authors: List<SemanticAuthor>? = emptyList(),
+    @Json(name = "citationCount") val citationCount: Int? = 0,
+    @Json(name = "referenceCount") val referenceCount: Int? = 0,
+    @Json(name = "openAccessPdf") val openAccessPdf: OpenAccessPdfUrl? = null,
+    @Json(name = "citations") val citations: List<PaperInfo>? = emptyList(),
+    @Json(name = "references") val references: List<PaperInfo>? = emptyList()
+)
+
+@JsonClass(generateAdapter = true)
+data class SemanticAuthor(
+    @Json(name = "name") val name: String?
+)
+
+@JsonClass(generateAdapter = true)
+data class OpenAccessPdfUrl(
+    @Json(name = "url") val url: String?
+)
+
+@JsonClass(generateAdapter = true)
+data class PaperInfo(
+    @Json(name = "paperId") val paperId: String?,
+    @Json(name = "title") val title: String?,
+    @Json(name = "year") val year: Int?,
+    @Json(name = "authors") val authors: List<SemanticAuthor>? = emptyList()
+)
+

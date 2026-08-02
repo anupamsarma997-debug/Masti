@@ -53,6 +53,8 @@ import com.example.model.SearchEngine
 @Composable
 fun SettingsDialog(
     settings: BrowserSettings,
+    allowAiProcessing: Boolean,
+    onToggleAiProcessing: () -> Unit,
     onUpdateSearchEngine: (SearchEngine) -> Unit,
     onToggleDesktopMode: () -> Unit,
     onToggleOverlayBlocker: () -> Unit,
@@ -86,7 +88,7 @@ fun SettingsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Browser Settings",
+                        text = "Browser & Privacy Settings",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -110,6 +112,41 @@ fun SettingsDialog(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // AI & Context Settings
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onToggleAiProcessing() },
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Icon(Icons.Default.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text("AI Page Context Processing", fontWeight = FontWeight.Bold)
+                                        Text(
+                                            "Allows Gemini API to receive extracted page text for summarization and Q&A. No personal account data is shared.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Switch(
+                                    checked = allowAiProcessing,
+                                    onCheckedChange = { onToggleAiProcessing() }
+                                )
+                            }
+                        }
+                    }
+
                     // Search Engine Setting
                     Card(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -150,7 +187,7 @@ fun SettingsDialog(
                         }
                     }
 
-                    // Toggles (Desktop Mode & Overlay Blocker)
+                    // Toggles (Desktop Mode & Distraction Blocker)
                     Card(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(16.dp),
@@ -191,18 +228,19 @@ fun SettingsDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                     Icon(Icons.Default.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Column {
-                                        Text("Paywall Overlay Blocker", fontWeight = FontWeight.Bold)
+                                        Text("Distraction & Popup Blocker", fontWeight = FontWeight.Bold)
                                         Text(
-                                            "Automatically removes modal popups & restores scroll",
+                                            "Hides popups, modal backdrops, cookie banners & restores page scrolling",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Switch(
                                     checked = settings.isOverlayBlockerEnabled,
                                     onCheckedChange = { onToggleOverlayBlocker() }
@@ -269,7 +307,7 @@ fun SettingsDialog(
                         }
                     }
 
-                    // About Card
+                    // Privacy Commitment Card
                     Card(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                         shape = RoundedCornerShape(16.dp),
@@ -279,11 +317,11 @@ fun SettingsDialog(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("About OpenEdu Browser", fontWeight = FontWeight.Bold)
+                                Text("No Tracking, No Ads Commitment", fontWeight = FontWeight.Bold)
                             }
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "Lightweight Native Android Web Browser built with Kotlin, Jetpack Compose, and Android WebView. Features legal Open Access paper discovery via Unpaywall, Wayback Machine cache lookups, and soft paywall removal.",
+                                text = "OpenEdu Browser is built as an open academic research companion. Zero behavioral tracking, zero ads, and zero sellable data telemetry.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )

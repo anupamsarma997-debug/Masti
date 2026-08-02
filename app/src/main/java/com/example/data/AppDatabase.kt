@@ -6,13 +6,24 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [BookmarkEntity::class, HistoryEntity::class],
-    version = 1,
+    entities = [
+        BookmarkEntity::class,
+        HistoryEntity::class,
+        ReadingItemEntity::class,
+        NoteEntity::class,
+        AiCacheEntity::class,
+        ArticleCacheEntity::class
+    ],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun bookmarkDao(): BookmarkDao
     abstract fun historyDao(): HistoryDao
+    abstract fun readingItemDao(): ReadingItemDao
+    abstract fun noteDao(): NoteDao
+    abstract fun aiCacheDao(): AiCacheDao
+    abstract fun articleCacheDao(): ArticleCacheDao
 
     companion object {
         @Volatile
@@ -24,7 +35,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "open_edu_browser_db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

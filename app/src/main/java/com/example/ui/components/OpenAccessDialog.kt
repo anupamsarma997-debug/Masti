@@ -59,13 +59,14 @@ import com.example.network.WaybackResponse
 @Composable
 fun OpenAccessDialog(
     initialDoiOrUrl: String?,
-    unpaywallResult: UnpaywallResponse?,
-    waybackResult: WaybackResponse?,
+    legalFreeResult: com.example.util.LegalFreeAccessResult?,
     isLoading: Boolean,
     errorMessage: String?,
     onLookupDoi: (String) -> Unit,
     onLookupWayback: (String) -> Unit,
     onOpenUrlInNewTab: (String) -> Unit,
+    onExportCitation: (com.example.util.PaperMetadata) -> Unit,
+    onViewCrossReferences: (com.example.util.LegalFreeAccessResult) -> Unit,
     onDismiss: () -> Unit
 ) {
     var queryInput by remember(initialDoiOrUrl) { mutableStateOf(initialDoiOrUrl ?: "") }
@@ -96,17 +97,24 @@ fun OpenAccessDialog(
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(28.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Open Access & Paper Finder",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
+                        Column {
+                            Text(
+                                text = "Legal Free Access Finder",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
                             )
-                        )
+                            Text(
+                                text = "Unpaywall + Wayback + Semantic Scholar",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     IconButton(onClick = onDismiss) {
@@ -124,17 +132,13 @@ fun OpenAccessDialog(
                 OutlinedTextField(
                     value = queryInput,
                     onValueChange = { queryInput = it },
-                    placeholder = { Text("Enter DOI (e.g. 10.1038/nature12345) or Web URL...") },
+                    placeholder = { Text("Enter DOI (e.g. 10.1038/s41586-020-2649-2) or URL...") },
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = {
                         if (queryInput.isNotBlank()) {
-                            if (queryInput.contains("10.") || queryInput.startsWith("doi:")) {
-                                onLookupDoi(queryInput)
-                            } else {
-                                onLookupWayback(queryInput)
-                            }
+                            onLookupDoi(queryInput)
                         }
                     }),
                     modifier = Modifier.fillMaxWidth()
@@ -154,7 +158,7 @@ fun OpenAccessDialog(
                     ) {
                         Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Unpaywall DOI")
+                        Text("Find Free Access")
                     }
 
                     Button(
@@ -182,10 +186,14 @@ fun OpenAccessDialog(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(120.dp),
+                                .height(160.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text("Searching legal repositories (Unpaywall, Semantic Scholar, Wayback)...", fontSize = 12.sp)
+                            }
                         }
                     } else if (errorMessage != null) {
                         Card(
@@ -200,9 +208,8 @@ fun OpenAccessDialog(
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
-                    } else if (unpaywallResult != null) {
-                        val result = unpaywallResult
-                        val bestPdfUrl = result.bestOaLocation?.urlForPdf ?: result.bestOaLocation?.url
+                    } else if (legalFreeResult != null) {
+                        val result = legalFreeResult
 
                         Card(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -217,11 +224,11 @@ fun OpenAccessDialog(
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(8.dp))
-                                            .background(if (result.isOa) Color(0xFF10B981) else Color(0xFFEF4444))
+                                            .background(if (result.isOaAvailable) Color(0xFF10B981) else Color(0xFFEF4444))
                                             .padding(horizontal = 8.dp, vertical = 4.dp)
                                     ) {
                                         Text(
-                                            text = if (result.isOa) "OPEN ACCESS FOUND" else "NO DIRECT OA",
+                                            text = if (result.isOaAvailable) "LEGAL FREE ACCESS AVAILABLE" else "NO OPEN VERSION FOUND",
                                             color = Color.White,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 11.sp
@@ -230,9 +237,9 @@ fun OpenAccessDialog(
 
                                     Spacer(modifier = Modifier.width(8.dp))
 
-                                    result.journalName?.let {
+                                    result.sourceName?.let {
                                         Text(
-                                            text = it,
+                                            text = "via $it",
                                             style = MaterialTheme.typography.labelMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -242,7 +249,7 @@ fun OpenAccessDialog(
                                 Spacer(modifier = Modifier.height(12.dp))
 
                                 Text(
-                                    text = result.title ?: "Untitled Research Paper",
+                                    text = result.title ?: "Academic Research Document",
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -252,62 +259,53 @@ fun OpenAccessDialog(
                                 Spacer(modifier = Modifier.height(6.dp))
 
                                 Text(
-                                    text = "DOI: ${result.doi ?: queryInput}",
+                                    text = "DOI: ${result.doi}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
-                                if (bestPdfUrl != null) {
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Quick Citation & Cross Ref Buttons
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            onExportCitation(
+                                                com.example.util.PaperMetadata(
+                                                    title = result.title ?: "Research Paper",
+                                                    doi = result.doi
+                                                )
+                                            )
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                                    ) {
+                                        Text("📋 Citation", fontSize = 12.sp)
+                                    }
 
                                     Button(
-                                        onClick = { onOpenUrlInNewTab(bestPdfUrl) },
+                                        onClick = { onViewCrossReferences(result) },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer)
+                                    ) {
+                                        Text("🔗 Cross-Refs (${result.citationCount})", fontSize = 12.sp)
+                                    }
+                                }
+
+                                if (result.bestFreeUrl != null) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Button(
+                                        onClick = { onOpenUrlInNewTab(result.bestFreeUrl) },
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
                                     ) {
                                         Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Open Legal Free PDF / Article")
-                                    }
-                                }
-                            }
-                        }
-                    } else if (waybackResult != null) {
-                        val closest = waybackResult.archivedSnapshots?.closest
-                        if (closest?.url != null) {
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(
-                                        text = "Internet Archive Wayback Snapshot Available",
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    )
-
-                                    Spacer(modifier = Modifier.height(6.dp))
-
-                                    Text(
-                                        text = "Timestamp: ${closest.timestamp ?: "Available"}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-
-                                    Spacer(modifier = Modifier.height(14.dp))
-
-                                    Button(
-                                        onClick = { onOpenUrlInNewTab(closest.url) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                                    ) {
-                                        Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Open Archived Snapshot")
+                                        Text("Open Legal Free Paper / PDF")
                                     }
                                 }
                             }
@@ -320,7 +318,7 @@ fun OpenAccessDialog(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Enter a research paper DOI (e.g., 10.1038/nature12345) or web article link above to query Unpaywall or Wayback Machine.",
+                                text = "Enter a research paper DOI (e.g. 10.1038/s41586-020-2649-2) above to find legal open access copies across Unpaywall, Semantic Scholar, and Wayback Machine.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center

@@ -59,4 +59,26 @@ class OpenAccessService {
             null
         }
     }
+
+    suspend fun checkSemanticScholar(doi: String): SemanticScholarPaper? = withContext(Dispatchers.IO) {
+        val cleanDoi = doi.trim().removePrefix("https://doi.org/").removePrefix("http://doi.org/").removePrefix("doi:")
+        if (cleanDoi.isEmpty()) return@withContext null
+
+        val fields = "title,year,authors,citationCount,referenceCount,openAccessPdf,citations.title,citations.authors,citations.paperId,references.title,references.authors,references.paperId"
+        val url = "https://api.semanticscholar.org/graph/v1/paper/DOI:$cleanDoi?fields=$fields"
+        val request = Request.Builder().url(url).build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val bodyString = response.body?.string() ?: return@withContext null
+                    val adapter = moshi.adapter(SemanticScholarPaper::class.java)
+                    adapter.fromJson(bodyString)
+                } else null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }
